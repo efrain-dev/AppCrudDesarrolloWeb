@@ -5,16 +5,28 @@
       <GridLayout columns="50, *">
         <Label class="action-bar-title" text="Usuario" colSpan="2" />
         <Label class="fas" text.decode="&#xf0c9;" @tap="onDrawerButtonTap" />
-        <Button text="Button" @tap="onButtonTap" />
       </GridLayout>
     </ActionBar>
 
     <GridLayout class="page__content">
-      <ListView for="item in listOfItems" @itemTap="onItemTap">
+      <Button text="Crear" @tap="onButtonTap" class="btn-save"  />
+
+      <ListView for="item in listOfItems">
         <v-template>
-          <Label :text="item" />
+          <DockLayout>
+            <Label :text="item" dock="left" width="240" />
+            <Button
+              text="Editar"
+              dock="left"
+              width="60"
+              class="btn-edit"
+              @tap="editUser"
+            />
+            <Button text="Eliminar" dock="left" width="60" class="btn-delete"  @tap="deleteUser"/>
+          </DockLayout>
         </v-template>
       </ListView>
+
     </GridLayout>
   </Page>
 </template>
@@ -22,15 +34,11 @@
 <script>
 import * as utils from "~/shared/utils";
 import { SelectedPageService } from "../shared/selected-page-service";
-import {
-  ModalDialogService,
-  ModalDialogOptions,
-} from "nativescript-angular/modal-dialog";
-
+import ModalUser from "./ModalUser";
 export default {
   data: function () {
     return {
-      listOfItems: ["Fernado", "Rodrigo", "Roberto"],
+      listOfItems: ["Fernado Martinez", "Rodrigo Alvarez", "Roberto Gomez"],
     };
   },
   mounted() {
@@ -43,26 +51,45 @@ export default {
     },
 
     onButtonTap() {
-      var dialogs = require("tns-core-modules/ui/dialogs");
-      dialogs
-        .action("Your message", "Cancel button text", ["Option1", "Option2"])
-        .then(function (result) {
-          console.log("Dialog result: " + result);
-          if (result == "Options1") {
-            //Do action1
-          } else if (result == "Option2") {
-            //Do action2
-          }
-        });
+      this.$showModal(ModalUser);
+    },
+    editUser() {
+      this.$showModal(ModalUser);
+
+    },
+    deleteUser() {
+      confirm({
+        title: "Confirmar",
+        message: "¿Estas seguro que deseas elminar el usuario?",
+        okButtonText: "Si, Eliminalo",
+        cancelButtonText: "No, Cancelar",
+      }).then((result) => {
+        if (result) {
+          alert("Eliminado Con exito");
+        }
+      });
     },
   },
 };
 </script>
 
-<style scoped lang="scss">
+<style  lang="scss">
 // Start custom common variables
 @import "@nativescript/theme/scss/variables/blue";
+
 // End custom common variables
 
 // Custom styles
+.btn-edit {
+  background: yellow;
+  color: black;
+}
+.btn-save {
+  background: green;
+  color: white;
+}
+.btn-delete {
+  background: red;
+  color: white;
+}
 </style>
