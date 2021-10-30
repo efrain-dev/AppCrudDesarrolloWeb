@@ -1,32 +1,41 @@
 <template>
   <Page class="page">
     <ActionBar class="action-bar">
-      <NavigationButton visibility="hidden" />
       <GridLayout columns="50, *">
         <Label class="action-bar-title" text="Usuario" colSpan="2" />
-        <Label class="fas" text.decode="&#xf0c9;" @tap="onDrawerButtonTap" />
+        <Button
+          text="Crear Usuario"
+          @tap="onButtonTap"
+          class="btn-save"
+          colSpan="3"
+        />
       </GridLayout>
     </ActionBar>
 
     <GridLayout class="page__content">
-      <Button text="Crear" @tap="onButtonTap" class="btn-save"  />
-
       <ListView for="item in listOfItems">
         <v-template>
           <DockLayout>
-            <Label :text="item" dock="left" width="240" />
+            <Label :text="item.name" dock="left" width="120" />
+            <Label :text="item.email" dock="left" width="120" />
+
             <Button
               text="Editar"
               dock="left"
               width="60"
               class="btn-edit"
-              @tap="editUser"
+              @tap="editUser(item)"
             />
-            <Button text="Eliminar" dock="left" width="60" class="btn-delete"  @tap="deleteUser"/>
+            <Button
+              text="Eliminar"
+              dock="left"
+              width="60"
+              class="btn-delete"
+              @tap="deleteUser(item)"
+            />
           </DockLayout>
         </v-template>
       </ListView>
-
     </GridLayout>
   </Page>
 </template>
@@ -35,29 +44,46 @@
 import * as utils from "~/shared/utils";
 import { SelectedPageService } from "../shared/selected-page-service";
 import ModalUser from "./ModalUser";
+import * as AppSettings from "@nativescript/core/application-settings";
+
+import axios from "axios/dist/axios";
 export default {
   data: function () {
     return {
-      listOfItems: ["Fernado Martinez", "Rodrigo Alvarez", "Roberto Gomez"],
+      listOfItems: [],
     };
   },
   mounted() {
     SelectedPageService.getInstance().updateSelectedPage("Usuario");
+    this.getData();
   },
   computed: {},
   methods: {
     onDrawerButtonTap() {
       utils.showDrawer();
     },
-
+    created() {
+      this.interval = setInterval(() => this.getData(), 10000);
+    },
     onButtonTap() {
-      this.$showModal(ModalUser);
+      this.$showModal(ModalUser, {
+        props: {
+          dataClient: {
+            id_cliente: null,
+            name: null,
+            email: null,
+            github: null,
+            profile_photo_path: null,
+          },
+        },
+      });
+      this.getData();
     },
-    editUser() {
-      this.$showModal(ModalUser);
-
+    editUser(item) {
+      this.$showModal(ModalUser, { props: { dataClient: item } });
+      this.getData();
     },
-    deleteUser() {
+    deleteUser(item) {
       confirm({
         title: "Confirmar",
         message: "¿Estas seguro que deseas elminar el usuario?",
@@ -65,9 +91,40 @@ export default {
         cancelButtonText: "No, Cancelar",
       }).then((result) => {
         if (result) {
-          alert("Eliminado Con exito");
+          axios({
+            method: "DELETE",
+            url: "https://apitest.online/api/clientes/"+item.id_cliente,
+            headers: {
+              Authorization: "Bearer " + AppSettings.getString("token"),
+            },
+          }).then(
+            (result) => {
+               alert("Eliminado Con exito");
+                     this.getData();
+
+            },
+            (error) => {
+              alert(error);
+            }
+          );
         }
       });
+    },
+    getData() {
+      axios({
+        method: "GET",
+        url: "https://apitest.online/api/clientes",
+        headers: {
+          Authorization: "Bearer " + AppSettings.getString("token"),
+        },
+      }).then(
+        (result) => {
+          this.listOfItems = result.data;
+        },
+        (error) => {
+          console.error(error);
+        }
+      );
     },
   },
 };
